@@ -15,10 +15,10 @@ import {
 function Events({ ...props }) {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [eventName, setEventName] = useState('');
+  const [eventName, setEventName] = useState('Default title');
   const [eventDesc, setEventDesc] = useState('');
   const [eventCategory, setEventCategory] = useState('Others');
-  const [events, setEvents] = useState([{id: 1, name: 'sadfdf', desc: '', startTime: '11:01', endTime: '11:01'}]);
+  const [events, setEvents] = useState([{id: 1, name: 'sadfdf', desc: '', startTime: '11:01', endTime: '11:01', category: 'Work'}]);
 
   useEffect(() => {
     const date = new Date();
@@ -27,17 +27,17 @@ function Events({ ...props }) {
     const minutes = date.getMinutes().toString().padStart(2, '0');
     const startTime = `${hours}:${minutes}`;
     setStartTime(startTime);
-    setEndTime(startTime);
+    // setEndTime(startTime);
   }, []);
 
   useEffect(() => {
-    console.log(events)
+    // console.log(events)
   }, [events])
 
   function createEvent(e) {
     e.preventDefault();
-    if (!eventName || !startTime || !endTime) {
-      toast.error('Enter event details!', {
+    if (!eventName || !startTime ) {
+      toast.error('Enter event name!', {
         position: 'top-right',
         autoClose: 3000,
         hideProgressBar: false,
@@ -46,6 +46,39 @@ function Events({ ...props }) {
         draggable: true,
         progress: undefined,
       });
+      return;
+    }
+    if(!endTime){
+      toast.error('Enter event time!', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      });
+      return;
+    }
+    let slotBooked = false;
+    events.forEach(
+      (event) => {
+        if((startTime>=event.startTime && startTime<=event.endTime) || (endTime>=event.startTime && endTime<=event.endTime) || (startTime<=event.startTime && event.startTime<=endTime) || (startTime<=event.endTime && event.endTime<=endTime)){
+          slotBooked = true;
+          return
+        }
+      }
+    )
+    if(slotBooked){
+      toast.error("Time slots already booked in between!!", {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+      })
       return;
     }
 
@@ -59,12 +92,31 @@ function Events({ ...props }) {
       date: props.date,
     };
     setEvents([...events, newEvent]);
+    setEvents((events) => events.sort((a, b) => a.startTime.localeCompare(b.startTime)));
 
-    setEventName('');
+    setEventName('Default title');
     setEventDesc('');
     setEventCategory('');
+    setEndTime(""); 
 
     toast.success('Event created successfully!', {
+      position: 'top-right',
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+    });
+  }
+  function onEdit(event, indexTarget) {
+    setEventName(event.name)
+    setEventDesc(event.desc);
+    setStartTime(event.startTime)
+    setEndTime(event.endTime)
+    setEventCategory(event.category)
+    setEvents((events) => events.filter((_, index) => index !== indexTarget));
+    toast.info('Edit the event here!', {
       position: 'top-right',
       autoClose: 3000,
       hideProgressBar: false,
@@ -173,27 +225,39 @@ function Events({ ...props }) {
       </form>
 
       <div className="div-events-list flex flex-col gap-3 w-full h-[230px] overflow-auto mt-3">
-        {events.map((event) => (
-          <div className={`event-card flex flex-col justify-between w-full min-h-[100px] bg-white rounded-xl p-2 ${event.category === "Work" ? "bg-blue-500" : event.category === "Personal" ? "bg-green-500" : "bg-zinc-500"}`} key={event.id}>
-            <div className="flex justify-between">
-              <div className="event-name font-[Montserrat] text-2xl text-white font-extrabold">{event.name}</div>
-              <div className="flex items-start gap-3 bg-blue-500 ">
-                <div className="">
-                  <FontAwesomeIcon icon={faPenToSquare} className='text-xl text-white' />
-                </div>
-                <div className="">
-                  <FontAwesomeIcon icon={faTrash} className='text-xl text-red-500' />
+        {events.map((event, indexTarget) =>
+          (
+            <div className={`event-card flex flex-col justify-between w-full min-h-[100px]  rounded-xl p-2 ${event.category === "Work" ? "bg-blue-500" : event.category === "Personal" ? "bg-green-500" : "bg-zinc-500"}`} key={event.id}>
+              <div className="flex justify-between">
+                <div className="event-name font-[Montserrat] text-2xl text-white font-extrabold">{event.name}</div>
+                <div className="flex justify-between items-start gap-6  ">
+                  <div 
+                    className="cursor-pointer" 
+                    onClick={() => {onEdit(event, indexTarget)}}
+                  >
+                    <FontAwesomeIcon icon={faPenToSquare} className='text-xl text-white' />
+                  </div>
+                  <div 
+                    className="cursor-pointer" 
+                    onClick={
+                      () => {
+                        setEvents((events) => events.filter((e, index) => index !== indexTarget));
+                      }
+                    }
+                  >
+                    <FontAwesomeIcon icon={faTrash} className='text-xl text-red-500' />
+                  </div>
                 </div>
               </div>
+              <div className="event-desc text-white break-normal break-words break-all ">{event.desc}</div>
+              <div className="event-time text-zinc-300">
+                {Number(event.startTime.substring(0, 2)) % 12 === 0 ? "12" : String(Number(event.startTime.substring(0, 2)) % 12).padStart(2, '0')}:{event.startTime.substring(3)} {Math.floor(Number(event.startTime.substring(0, 2)) / 12) === 0 ? "am" : "pm"} -
+                {Number(event.endTime.substring(0, 2)) % 12 === 0 ? "12" : String(Number(event.endTime.substring(0, 2)) % 12).padStart(2, '0')}:{event.endTime.substring(3)} {Math.floor(Number(event.endTime.substring(0, 2)) / 12) === 0 ? "am" : "pm"}
+                {console.log(event.startTime)}
+              </div>
             </div>
-            <div className="event-desc text-white break-normal break-words break-all ">{event.desc}</div>
-            <div className="event-time text-zinc-300">
-              {console.log(Math.floor(Number(event.endTime.substring(3)) / 12))}
-              {Number(event.startTime.substring(0, 2)) % 12 === 0 ? "12" : String(Number(event.startTime.substring(0, 2)) % 12).padStart(2, '0')}:{event.startTime.substring(3)} {Math.floor(Number(event.startTime.substring(0, 2)) / 12) === 0 ? "am" : "pm"} -
-              {Number(event.endTime.substring(0, 2)) % 12 === 0 ? "12" : String(Number(event.endTime.substring(0, 2)) % 12).padStart(2, '0')}:{event.endTime.substring(3)} {Math.floor(Number(event.endTime.substring(0, 2)) / 12) === 0 ? "am" : "pm"}
-            </div>
-          </div>
-        ))}
+          )
+        )}
       </div>
     </div>
   );
