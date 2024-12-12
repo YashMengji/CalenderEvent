@@ -1,9 +1,9 @@
-import * as React from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
-import { DayPicker } from "react-day-picker"
+import * as React from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { DayPicker } from "react-day-picker";
 
-import { cn } from "@/lib/utils"
-import { buttonVariants } from "@/components/ui/button"
+import { cn } from "@/lib/utils";
+import { buttonVariants } from "@/components/ui/button";
 
 function Calendar({
   className,
@@ -11,9 +11,23 @@ function Calendar({
   showOutsideDays = true,
   ...props
 }) {
+  const [selectedDay, setSelectedDay] = React.useState(null); // Manage selected day state
+
+  const handleDayClick = (day, modifiers, e) => {
+    if (modifiers.selected) {
+      return; // Prevent unselecting the day
+    }
+    setSelectedDay(day); // Update the selected day
+    if (props.onDayClick) {
+      props.onDayClick(day, modifiers, e);
+    }
+  };
+
   return (
     <div className="scale-125"> {/* Adjust scale as needed */}
       <DayPicker
+        selected={selectedDay}
+        onDayClick={(day, modifiers, e) => {handleDayClick(day, modifiers, e)}}
         showOutsideDays={showOutsideDays}
         className={cn("p-3", className)}
         classNames={{
@@ -67,6 +81,6 @@ function Calendar({
   );
 }
 
-Calendar.displayName = "Calendar"
+Calendar.displayName = "Calendar";
 
-export { Calendar }
+export { Calendar };
