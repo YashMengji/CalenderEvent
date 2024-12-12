@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faPenToSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { toast } from 'react-toastify';
@@ -13,10 +13,12 @@ import {
 function Events({ dateToday }) {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [eventName, setEventName] = useState('Default title');
-  const [eventDesc, setEventDesc] = useState('');
+  const [eventName, setEventName] = useState('');
   const [eventCategory, setEventCategory] = useState('Others');
+  const [eventDesc, setEventDesc] = useState('');
   const [events, setEvents] = useState(JSON.parse(localStorage.getItem("eventData")) || {});
+  const eventCard = useRef(null);
+  const eventBox = useRef(null);
 
   useEffect(() => {
     const date = new Date();
@@ -83,7 +85,7 @@ function Events({ dateToday }) {
       [currentDate]: [...eventsForDate, newEvent].sort((a, b) => a.startTime.localeCompare(b.startTime)),
     }));
 
-    setEventName('Default title');
+    setEventName('');
     setEventDesc('');
     setEventCategory('Others');
     setEndTime('');
@@ -103,6 +105,24 @@ function Events({ dateToday }) {
     }));
     toast.info('Edit the event here!', { position: 'top-right', autoClose: 3000 });
   }
+
+  function handleMouseDown(e) {
+    e.preventDefault();
+    e.target.style.cursor = "grabbing"
+
+    function handleMouseUp() {
+      e.target.style.cursor = "grab"
+      // document.removeEventListener("mouseup", handleMouseUp);
+    }
+
+    eventCard.current.addEventListener("drag", (e) => {
+      
+      e.target.style.top 
+    });
+
+    document.addEventListener("mouseup", handleMouseUp);
+  }
+
 
   return (
     <div className="w-[600px] h-[500px] border-black border border-zinc-500 rounded-xl p-4">
@@ -197,13 +217,18 @@ function Events({ dateToday }) {
         </div>
       </form>
 
-      <div className="div-events-list flex flex-col gap-3 w-full h-[230px] overflow-auto mt-3">
+      <div 
+        className="div-events-list relative flex flex-col gap-3 w-full h-[230px] overflow-auto mt-3"
+        ref={eventBox}
+      >
         {events[dateToday.toLocaleDateString()]?.map((event, indexTarget) => (
           <div
             className={`event-card flex flex-col justify-between w-full min-h-[100px] rounded-xl p-2 ${
               event.category === "Work" ? "bg-blue-500" : event.category === "Personal" ? "bg-green-500" : "bg-zinc-500"
             }`}
             key={event.id}
+            ref={eventCard}
+            onMouseDown={handleMouseDown}
           >
             <div className="flex justify-between">
               <div className="event-name font-[Montserrat] text-2xl text-white font-extrabold">
